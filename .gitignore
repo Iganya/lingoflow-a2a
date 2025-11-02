@@ -1,0 +1,13 @@
+# Environment variables
+.env
+
+# Virtual environment
+venv/
+
+
+__pycache__/
+
+
+config.json
+
+lingoflow_a2a.egg-info/

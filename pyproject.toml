@@ -1,0 +1,19 @@
+[project]
+name = "lingoflow-a2a"
+version = "0.1.0"
+description = "A fast, accurate multilingual translation agent with Telex A2A protocol support"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "groq>=0.33.0",
+    "python-dotenv>=1.0.1",
+    "pydantic>=2.8.0",
+    "typing-extensions>=4.12.0",
+    "httpx>=0.28.1"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
