@@ -3,18 +3,27 @@ from typing import Literal, Optional, List, Dict, Any
 from datetime import datetime
 from uuid import uuid4
 
+
 class MessagePart(BaseModel):
     kind: Literal["text", "data", "file"]
     text: Optional[str] = None
+    data: Optional[List] = None
+    file_url: Optional[str] = None
    
+class ArtifactMessagePart(BaseModel):
+    kind: Literal["text", "data", "file"]
+    text: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+    file_url: Optional[str] = None
+
 
 class A2AMessage(BaseModel):
-    messageId: str = Field(default_factory=lambda: str(uuid4()))
+    kind: Literal["message"] = "message"
     role: Literal["user", "agent", "system"]
     parts: List[MessagePart]
-    kind: Literal["message"] = "message"
+    messageId: str = Field(default_factory=lambda: str(uuid4()))
     taskId: Optional[str] = None
-
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class MessageConfiguration(BaseModel):
@@ -40,7 +49,7 @@ class TaskStatus(BaseModel):
 class Artifact(BaseModel):
     artifactId: str = Field(default_factory=lambda: str(uuid4()))
     name: str
-    parts: List[MessagePart]
+    parts: List[ArtifactMessagePart]
 
 class TaskResult(BaseModel):
     id: str

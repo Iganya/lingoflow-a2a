@@ -24,7 +24,7 @@ Translates input text to the specified target language.
 #### Request Body (JSON)
 
 ```
-curl -X POST http://127.0.0.1:8000/a2a/agent/translate \
+curl -X POST https://lingoflow-a2a-iganya9011-v4jm81uz.leapcell.dev/a2a/lingflow \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -103,7 +103,7 @@ curl -X POST http://127.0.0.1:8000/a2a/agent/translate \
 ## How to Run Locally
 1. Clone the repository:
    ```bash
-   git clone hhttps://github.com/iganya/hng13-task-0.git
+   git clone https://github.com/Iganya/lingoflow-a2a
    cd your-repo
    ```
 2. Create a virtual environment and activate it:

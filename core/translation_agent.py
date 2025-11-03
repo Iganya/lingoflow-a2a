@@ -4,9 +4,10 @@ from uuid import uuid4
 from groq import Groq
 import os
 import json
+import re
 from .a2a_models import (
     A2AMessage, TaskResult, TaskStatus, Artifact,
-    MessagePart, MessageConfiguration
+    MessagePart, MessageConfiguration, ArtifactMessagePart
 )
 
 class LingoFlowAgent:
@@ -37,6 +38,7 @@ class LingoFlowAgent:
             - Never escape or wrap the JSON — output raw valid JSON only.
                         
         """)
+    
 
     async def process_messages(
         self,
@@ -52,18 +54,27 @@ class LingoFlowAgent:
         user_msg = messages[-1]
         text_to_translate = ""
         target_lang = "English"  # default
+        raw_text = next(
+            (part.data[-1]["text"] 
+            for part in user_msg.parts
+            if part.kind == "data"),
+            None
+        )
+        if raw_text is None:
+            raw_text = next(
+                (part.text
+                for part in user_msg.parts
+                if part.kind == "text"),
+                "Invalid Text"
+            )
 
-        for part in user_msg.parts:
-            if part.kind == "text":
-                raw = part.text.strip()
-                # Extract target language if specified
-                if " to " in raw.lower():
-                    parts = raw.lower().split(" to ", 1)
-                    text_to_translate = parts[0].strip()
-                    target_lang = parts[1].strip().capitalize()
-                else:
-                    text_to_translate = raw
-                break
+        if " to " in raw_text.lower():
+            parts = raw_text.lower().split(" to ", 1)
+            text_to_translate = parts[0].strip()
+            target_lang = parts[1].strip().capitalize()
+        else:
+            text_to_translate = raw_text
+       
 
         if not text_to_translate:
             raise ValueError("No text to translate")
@@ -82,6 +93,8 @@ class LingoFlowAgent:
         result =  json.loads(response)
     
         translation = result.get("translation", text_to_translate)
+        source_code = result.get("source_lang", "en")
+        target_code = result.get("target_lang", self._lang_to_code(target_lang))
 
         # Build response message
         response_msg = A2AMessage(
@@ -94,18 +107,21 @@ class LingoFlowAgent:
         artifacts = [
             Artifact(
                 name="translation",
-                parts=[MessagePart(kind="text", text=translation)]
+                parts=[ArtifactMessagePart(kind="text", text=translation)]
+            ),
+            Artifact(
+                name="metadata",
+                parts=[ArtifactMessagePart(kind="data", data={
+                    "source_lang": source_code,
+                    "target_lang": target_code
+                })]
             )
         ]
 
         # History
-        history = [A2AMessage(
-            role="agent",
-            parts=[MessagePart(kind="text", text=translation)],
-            taskId=task_id
-        )]
+        history = messages + [response_msg]
 
-        # Always ask for next input unless empty
+        # Setting state value
         state = "working"
         if not user_msg:
             state = "input-required"
@@ -122,4 +138,16 @@ class LingoFlowAgent:
             artifacts=artifacts,
             history=history
         )
+    
+    
+    def _lang_to_code(self, lang: str) -> str:
+        mapping = {
+            "english": "en", "spanish": "es", "french": "fr", "german": "de",
+            "chinese": "zh", "japanese": "ja", "korean": "ko", "arabic": "ar",
+            "hindi": "hi", "portuguese": "pt", "russian": "ru", "italian": "it"
+        }
+        return mapping.get(lang.lower(), "en")
+
+
+
 
